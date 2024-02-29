@@ -155,13 +155,23 @@ const watchList = {
 const Home = () => {
   const series = Object.keys(watchList);
   const [selectedSeries, setSelectedSeries] = useState([]);
-  const [selectedWatches, setSelectedWatches] = useState([]);
+  const [selectedWatchIds, setSelectedWatchIds] = useState([]);
   const [viewFamily, setViewFamily] = useState(true);
   const [watch, setWatch] = useState({});
+  const watchCount = selectedSeries.reduce(
+    (acc, series) => acc + Object.keys(watchList[series]).length,
+    0
+  );
 
   useEffect(() => {
     setWatch({});
   }, [selectedSeries]);
+
+  useEffect(() => {
+    if (selectedWatchIds.length === watchCount - 1) {
+      alert("Time to guess!");
+    }
+  }, [selectedWatchIds, watchCount, watch.model]);
 
   const selectSeries = (watchSeries) => {
     if (!selectedSeries.includes(watchSeries)) {
@@ -172,32 +182,42 @@ const Home = () => {
   };
 
   const selectWatch = (watchId) => {
-    if (!selectedWatches.includes(watchId)) {
-      setSelectedWatches([...selectedWatches, watchId]);
+    if (!selectedWatchIds.includes(watchId)) {
+      setSelectedWatchIds([...selectedWatchIds, watchId]);
     } else {
-      setSelectedWatches(selectedWatches.filter((item) => item !== watchId));
+      setSelectedWatchIds(selectedWatchIds.filter((item) => item !== watchId));
     }
   };
 
   const randomWatch = () => {
+    setSelectedWatchIds([]);
+    setWatch({});
     const randomSeries =
       selectedSeries[Math.floor(Math.random() * selectedSeries.length)];
     const randomWatches = Object.keys(watchList[randomSeries]);
-    const randomWatch =
+    const randomWatchId =
       randomWatches[Math.floor(Math.random() * randomWatches.length)];
-    setWatch({ series: randomSeries, watch: randomWatch });
+    setWatch({
+      series: randomSeries,
+      watchId: randomWatchId,
+      model: watchList[randomSeries][randomWatchId],
+    });
+  };
+
+  const toggleViewFamily = () => {
+    setViewFamily(!viewFamily);
   };
 
   const reset = () => {
     setSelectedSeries([]);
-    setSelectedWatches([]);
+    setSelectedWatchIds([]);
     setWatch({});
   };
 
   return (
-    <main className="flex font-mono min-h-screen flex-col items-center p-12 bg-slate-300">
-      <header className="z-10 max-w-5xl w-full items-center justify-between text-sm lg:flex">
-        <div className="fixed left-0 top-0 flex w-full justify-center border-b border-gray-300 pb-6 pt-8 dark:border-neutral-800 dark:bg-zinc-800/30 dark:from-inherit lg:static lg:w-auto  lg:rounded-xl lg:border lg:bg-gray-200 lg:p-4 lg:dark:bg-zinc-800/30">
+    <div className="flex font-mono min-h-screen flex-col items-center bg-slate-300">
+      <header className="w-full items-center  text-sm">
+        <div className="flex w-full justify-center border-b border-gray-300 pb-6 pt-8 dark:border-neutral-800 dark:bg-zinc-800/30 dark:from-inherit ">
           <div>
             <b>Which Watch</b> am I???
           </div>
@@ -211,7 +231,7 @@ const Home = () => {
             By <span className="font-bold text-lg">@n8udd</span>
           </a>
         </div>
-        <div className="flex justify-start width-full">
+        <div className="flex justify-start width-full mt-8 ml-4">
           <button
             className="bg-red-600 text-white shadow-md px-4 py-2"
             onClick={reset}
@@ -221,154 +241,186 @@ const Home = () => {
         </div>
       </header>
 
-      <div className="flex flex-row justify-between w-full ">
-        <section className="mt-16">
-          <div>
-            <h3 className="font-bold">
-              1: Agree which series you wish to play with...
-            </h3>
-          </div>
-          <div className="flex flex-wrap justify-between space-y-2 space-x-2 w-full mt-2">
-            {series.map((watchSeries, index) => (
-              <div
-                className={`flex bg-white shadow-md hover:bg-slate-200 p-4 text-center items-center justify-center cursor-pointer first:mt-2 first:ml-2 ${
-                  selectedSeries.includes(watchSeries) ? "bg-blue-400" : ""
-                }`}
-                key={index}
-                onClick={() => selectSeries(watchSeries)}
-              >
-                {watchSeries}
-              </div>
-            ))}
-            <div
-              className={`flex bg-black text-white hover:bg-slate-800  p-4 text-center items-center justify-center cursor-pointer min-w-48`}
-              onClick={() => {
-                if (selectedSeries.length == Object.keys(watchList).length) {
-                  setSelectedSeries([]);
-                  return;
-                }
-                setSelectedSeries(series);
-              }}
-            >
-              {selectedSeries.length == Object.keys(watchList).length
-                ? "Clear all"
-                : "Select All"}
-            </div>
-          </div>
-        </section>
-
-        <section className="ml-16 mt-16">
-          <div>
-            <h3 className="font-bold">1b: Select your view</h3>
-          </div>
-          <div className="flex space-x-4 mt-4">
-            <div
-              className={`flex bg-white shadow-md hover:bg-slate-200 p-4 text-center items-center justify-center cursor-pointer ${
-                viewFamily ? "bg-blue-400" : ""
-              }`}
-              onClick={() => setViewFamily(true)}
-            >
-              Individual
-            </div>
-            <div
-              className={`flex bg-white shadow-md hover:bg-slate-200 p-4 text-center items-center justify-center cursor-pointer ${
-                !viewFamily ? "bg-blue-400" : ""
-              }`}
-              onClick={() => setViewFamily(false)}
-            >
-              Family
-            </div>
-          </div>
-        </section>
-      </div>
-
-      {selectedSeries.length > 0 && (
-        <>
-          <div className="flex flex-row justify-start items-center space-x-8 w-full mt-24">
-            <h3 className="font-bold">
-              2: Each select a random watch that <u>your opponent</u> has to
-              guess...
-            </h3>
-          </div>
-          <section className="flex flex-row justify-start items-center space-x-8 w-full mt-4">
-            <div className="">
-              <div
-                className={`flex bg-white shadow-md hover:bg-slate-200 p-4 text-center items-center justify-center cursor-pointer`}
-                onClick={() => randomWatch()}
-              >
-                Random
-              </div>
-            </div>
+      <main className="p-4 mb-16 w-full">
+        <div className="flex flex-col md:flex-row justify-start w-full">
+          <section className="mt-16 w-4/5">
             <div>
-              <div className="text-2xl font-bold font-mono">
-                {watch.series && (
-                  <div>{watchList[watch.series][watch.watch]}</div>
-                )}
+              <h3 className="font-bold">
+                1: Agree which series you wish to play with...
+              </h3>
+            </div>
+            <div className="flex flex-wrap justify-start space-y-2 space-x-2 w-full mt-2">
+              {series.map((watchSeries, index) => (
+                <div
+                  className={`flex bg-blue-400 shadow-md hover:bg-slate-200 p-4 text-center items-center justify-center cursor-pointer first:mt-2 first:ml-2 ${
+                    selectedSeries.includes(watchSeries)
+                      ? "bg-blue-400"
+                      : "bg-white"
+                  }`}
+                  key={index}
+                  onClick={() => selectSeries(watchSeries)}
+                >
+                  {watchSeries}
+                </div>
+              ))}
+            </div>
+            <div className="flex ml-2 space-x-4 mt-4">
+              <div
+                className={`flex bg-slate-800 text-green-500 hover:bg-slate-600  p-4 text-center items-center justify-center cursor-pointer min-w-48`}
+                onClick={() => {
+                  setSelectedSeries(series);
+                }}
+              >
+                Select All
+              </div>
+              <div
+                className={`flex bg-slate-800 text-red-500 hover:bg-slate-600  p-4 text-center items-center justify-center cursor-pointer min-w-48`}
+                onClick={() => {
+                  setSelectedSeries([]);
+                }}
+              >
+                Clear All
               </div>
             </div>
           </section>
-        </>
-      )}
 
-      {selectedSeries.length > 0 && (
-        <div className="flex flex-col space-x-8 w-full mt-24">
-          <h3 className="font-bold mb-4 ">
-            3: Ask &ldquo;Guess Who&rdquo; style questions, and click on the
-            watches to eliminate
-          </h3>
-          <h6>
-            eg: Is the screen amoled? Does it have a touchscreen? Is it solar?
-          </h6>
-          <h5 className="text-sm mt-4">
-            <span className="font-bold italic text-gray-500 bg-gray-200 p-2">
-              (to make it really hard... you&apos;re not allowed to say any
-              names within the brand, eg pro, solar, fenix etc)
-            </span>
-          </h5>
-        </div>
-      )}
-
-      {viewFamily ? (
-        <section className=" flex flex-wrap justify-start w-full space-x-4 space-y-4 -ml-2 ">
-          {selectedSeries?.map((watchSeries, index) =>
-            Object.keys(watchList[watchSeries]).map((watchId, index) => (
-              <div
-                key={index}
-                className={`first:ml-4 first:mt-4 bg-white shadow-md p-4 cursor-pointer hover:bg-slate-200 ${
-                  selectedWatches.includes(watchId) ? "text-slate-300" : ""
-                }`}
-                title={watchId}
-                onClick={() => selectWatch(watchId)}
-              >
-                {watchList[watchSeries][watchId]}
+          {selectedSeries.length > 0 && (
+            <section className="mt-16 md:ml-16">
+              <div>
+                <h3 className="font-bold">1b: Select your view type</h3>
               </div>
-            ))
+              <div className="flex space-x-4 mt-4">
+                <div
+                  className={`flex shadow-md hover:bg-slate-200 p-4 text-center items-center justify-center cursor-pointer ${
+                    viewFamily ? "bg-white" : "bg-blue-400"
+                  }`}
+                  onClick={toggleViewFamily}
+                >
+                  Individual
+                </div>
+                <div
+                  className={`flex shadow-md hover:bg-slate-200 p-4 text-center items-center justify-center cursor-pointer ${
+                    !viewFamily ? "bg-white" : "bg-blue-400"
+                  }`}
+                  onClick={toggleViewFamily}
+                >
+                  Family
+                </div>
+              </div>
+            </section>
           )}
-        </section>
-      ) : (
-        <section className="mt-24 flex flex-col w-full justify-start space-x-4 space-y-4 -ml-2 ">
-          {selectedSeries?.map((watchSeries, index) => (
-            <div key={index} className="first:ml-2">
-              <h3 className="font-bold text-xl">{watchSeries}:</h3>
-              <div className="flex flex-wrap space-x-4 space-y-4 -ml-2 ">
-                {Object.keys(watchList[watchSeries]).map((watchId, index) => (
-                  <div
-                    key={index}
-                    className={`first:ml-4 first:mt-4 bg-white shadow-md p-4 cursor-pointer hover:bg-slate-200 ${
-                      selectedWatches.includes(watchId) ? "text-slate-300" : ""
-                    }`}
-                    title={watchId}
-                    onClick={() => selectWatch(watchId)}
-                  >
-                    {watchList[watchSeries][watchId]}
-                  </div>
-                ))}
-              </div>
+        </div>
+
+        {selectedSeries.length > 0 && (
+          <>
+            <div className="flex flex-row justify-start items-center space-x-8 w-full mt-16">
+              <h3 className="font-bold">
+                2: Each select a random watch that <u>your opponent</u> has to
+                guess...
+              </h3>
             </div>
-          ))}
-        </section>
-      )}
-    </main>
+            <section className="flex flex-row justify-start items-center space-x-8 w-full mt-4">
+              <div className="">
+                <div
+                  className={`flex bg-blue-600 text-white shadow-md hover:bg-blue-400 p-4 text-center items-center justify-center cursor-pointer ml-2`}
+                  onClick={() => randomWatch()}
+                >
+                  Randomise
+                </div>
+              </div>
+              <div>
+                <div className="text-2xl font-bold font-mono">
+                  {watch.series && <div>{watch.model}</div>}
+                </div>
+              </div>
+            </section>
+          </>
+        )}
+
+        {selectedSeries.length > 0 && (
+          <div className="flex flex-col w-full mt-16">
+            <h3 className="font-bold mb-4 ">
+              3: Ask &ldquo;Guess Who&rdquo; style (yes/no) questions, and click
+              on the watches to eliminate
+            </h3>
+            <h6 className="ml-4">
+              eg: Is the screen amoled? Does it have a touchscreen? Is it a
+              multi-sport watch?
+            </h6>
+            <h5 className="text-sm mt-4 ml-4">
+              <span className="font-bold italic text-gray-500 bg-gray-200 p-2">
+                (to make it really hard... you&apos;re not allowed to say any
+                names within the brand, eg pro, solar, fenix etc)
+              </span>
+            </h5>
+          </div>
+        )}
+
+        {viewFamily ? (
+          <section className="mt-16 flex flex-col w-full justify-start space-x-4 space-y-4 -ml-2 ">
+            {selectedSeries?.map((watchSeries, index) => (
+              <div key={index} className="first:ml-2">
+                <h3 className="font-bold text-xl">{watchSeries}:</h3>
+                <div className="flex flex-wrap space-x-4 space-y-4 -ml-2 ">
+                  {Object.keys(watchList[watchSeries]).map((watchId, index) => (
+                    <button
+                      key={index}
+                      className={`first:ml-4 first:mt-4 bg-white shadow-md p-4  ${
+                        selectedWatchIds.includes(watchId)
+                          ? "text-slate-300"
+                          : ""
+                      }
+                      ${
+                        !watch?.watchId
+                          ? "cursor-not-allowed"
+                          : "cursor-pointer hover:bg-slate-200"
+                      }
+                      `}
+                      title={
+                        watch?.watchId ? watchId : "Please randomise a watch"
+                      }
+                      onClick={() => {
+                        !watch?.watchId
+                          ? alert("Please randomise a watch")
+                          : selectWatch(watchId);
+                      }}
+                    >
+                      {watchList[watchSeries][watchId]}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </section>
+        ) : (
+          <section className="mt-16 flex flex-wrap justify-start w-full space-x-4 space-y-4 -ml-2 ">
+            {selectedSeries?.map((watchSeries, index) =>
+              Object.keys(watchList[watchSeries]).map((watchId, index) => (
+                <button
+                  key={index}
+                  className={`first:ml-4 first:mt-4 bg-white shadow-md p-4   ${
+                    selectedWatchIds.includes(watchId) ? "text-slate-300" : ""
+                  }
+                  ${
+                    !watch?.watchId
+                      ? "cursor-not-allowed"
+                      : "cursor-pointer hover:bg-slate-200"
+                  }`}
+                  title={watch?.watchId ? watchId : "Please randomise a watch"}
+                  onClick={() => {
+                    !watch?.watchId
+                      ? alert("Please randomise a watch")
+                      : selectWatch(watchId);
+                  }}
+                >
+                  {watchList[watchSeries][watchId]}
+                </button>
+              ))
+            )}
+          </section>
+        )}
+      </main>
+    </div>
   );
 };
 
